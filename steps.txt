@@ -1,0 +1,29 @@
+Problem 1: Exploding loss
+
+Whats going on?
+K_S(x, x', {r_i}) = (1/n) ∑ r_i² K(x, x_i) K(x_i, x')
+- The SNTK has a residual term and at some point the gradient explodes due to it being squared.
+- During early training, most residuals decrease as the model learns
+- Random fluctuations eventually cause some residuals to increase slightly
+- These residuals get quadratically amplified in the SNTK formula
+- This leads to disproportionately large parameter updates for those data points
+- The larger updates often increase those residuals even further
+- Once the largest squared residuals exceed a critical threshold, the system tips into an unstable regime
+
+Insight 1
+- Wider networks resist the exploding residual tipping point longer
+- More parameters to distribute the residual errors
+
+Insight 2: The SNTK system has two competing forces:
+- A stabilizing gradient descent force trying to reduce errors
+- A destabilizing force from the squared residual terms
+- The system remains stable until the destabilizing force exceeds a critical threshold, after which recovery becomes impossible and the system transitions to a new, unstable state.
+- This is fundamentally different from standard optimization methods like SGD where errors tend to be self-correcting rather than self-amplifying.
+
+Solution:
+- I have decided to move forward with a residual clipping solution. This is because our theory remains valid as a continuous-time approximation of SGD dynamics. Trying residual clipping seems like a easy way to bridge our gap from theoretical SGD to implemented SGD.
+- Our new SNTK is now defined as a Regularized SNTK:
+
+K_S^reg(x, x', {r_i}) = (1/n) ∑ min(r_i², τ) K(x, x_i) K(x_i, x')
+
+where t is defined using the 3-sigma rule: τ = mean(r_i²) + 3 * std(r_i²)
