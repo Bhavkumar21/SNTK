@@ -138,7 +138,7 @@ def plot_four_method_comparison(X, y, X_test, y_test_true,
     plt.suptitle(f'Comparison of Training Methods (Width = {width})', fontsize=16)
     plt.tight_layout()
     plt.subplots_adjust(top=0.93)
-    plt.savefig(f'img/four_method_comparison-{width}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'img/four_method_comparison-{width}-5bt.png', dpi=300, bbox_inches='tight')
     plt.close()
     
     # Focused view: only final predictions
@@ -177,5 +177,5 @@ def plot_four_method_comparison(X, y, X_test, y_test_true,
     plt.legend(fontsize=12, loc='upper left')
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
-    plt.savefig(f'img/four_method_predictions-{width}.png', dpi=300, bbox_inches='tight')
+    plt.savefig(f'img/four_method_predictions-{width}-5bt.png', dpi=300, bbox_inches='tight')
     plt.close()

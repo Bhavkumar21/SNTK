@@ -127,11 +127,6 @@ def train_with_sntk(model, X_tensor, y_tensor, X_test_tensor, epochs=100, batch_
             ntk = compute_ntk(model, X_tensor)
             sntk = compute_sntk(model, X_tensor, X_batch, residuals)
             
-            if epoch > 0 and losses[-1] > losses[-2] * 1.2:
-                lr = lr * 0.5  # Reduce learning rate when loss increases
-            else:
-                lr = lr
-            
             with torch.no_grad():
                 deterministic_update = -lr * torch.matmul(ntk, (current_outputs - y_tensor))
                 noise_scale = torch.sqrt(torch.tensor(lr, device=device))

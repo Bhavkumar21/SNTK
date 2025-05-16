@@ -83,47 +83,30 @@ global_max_sq_residual = 1.0  # Global cap
 historical_thresholds = []    # Track threshold history
 
 def compute_sntk(model, x, x_batch, residuals, epoch=0):
-    """Enhanced SNTK computation with robust stability mechanisms"""
-    global global_max_sq_residual, historical_thresholds
-    
+    """Balanced SNTK computation with selective stability mechanisms"""
     n_samples = x.shape[0]
     n_batch = x_batch.shape[0]
     
-    # Step 1: Calculate baseline statistical threshold
+    # Calculate squared residuals
     residuals_np = residuals.detach().cpu().numpy()
     squared_residuals = residuals_np ** 2
     
-    # Step 2: More conservative sigma (2-sigma instead of 3-sigma)
+    # Calculate statistics with higher threshold (2.5-sigma)
     mean_sq_res = np.mean(squared_residuals)
     std_sq_res = np.std(squared_residuals)
-    stat_threshold = mean_sq_res + 2.0 * std_sq_res
     
-    # Step 3: Apply global cap with decay
-    global_max_sq_residual = min(global_max_sq_residual, max(0.5, 10.0 / (epoch + 10)))
+    # Start with a more permissive threshold
+    base_threshold = mean_sq_res + 2.5 * std_sq_res
     
-    # Step 4: Percentile-based threshold as backup strategy
-    percentile_threshold = np.percentile(squared_residuals, 95)
+    # Decay factor that becomes less restrictive over time
+    # Allowing more stochasticity as training stabilizes
+    epoch_factor = min(1.0, 0.5 + (epoch / 400))
     
-    # Step 5: Use minimum of all threshold strategies
-    max_squared_residual = min(
-        stat_threshold,
-        global_max_sq_residual, 
-        percentile_threshold,
-        0.5  # Hard maximum cap
-    )
+    # Apply an absolute cap that's high enough for stochasticity
+    # but prevents complete divergence
+    max_squared_residual = min(base_threshold * epoch_factor, 2.0)
     
-    # Step 6: Ensure minimum floor for early training stability
-    if epoch < 10:
-        max_squared_residual = max(max_squared_residual, 0.05)
-    
-    # Step 7: Track threshold history for monitoring
-    historical_thresholds.append(max_squared_residual)
-    
-    # Step 8: Apply temporal smoothing if we have history
-    if len(historical_thresholds) > 5:
-        max_squared_residual = 0.7 * max_squared_residual + 0.3 * np.mean(historical_thresholds[-5:])
-    
-    # Compute SNTK with robust clipping
+    # Compute SNTK with balanced clipping
     K_x_batch = compute_ntk(model, x, x_batch)
     K_batch_x = K_x_batch.T
     
@@ -137,14 +120,9 @@ def compute_sntk(model, x, x_batch, residuals, epoch=0):
         chunk_K_x_batch = K_x_batch[chunk_indices, :]
         
         for i in range(n_batch):
-            # Apply enhanced clipping
+            # Simple hard clipping without additional dampening
             r_i_squared = min(residuals[i].item() ** 2, max_squared_residual)
             
-            # Step 9: Apply soft clipping through logarithmic dampening for large values
-            if r_i_squared > max_squared_residual * 0.5:
-                dampen_factor = 0.5 + 0.5 * (max_squared_residual * 0.5) / max(r_i_squared, 1e-10)
-                r_i_squared *= dampen_factor
-                
             outer_product = torch.outer(chunk_K_x_batch[:, i], K_batch_x[i, :])
             sntk_matrix[chunk_indices, :] += r_i_squared * outer_product
     
@@ -152,29 +130,11 @@ def compute_sntk(model, x, x_batch, residuals, epoch=0):
     sntk_matrix /= n_batch
     sntk_matrix = 0.5 * (sntk_matrix + sntk_matrix.T)
     
-    # Step 10: Add adaptive regularization based on eigenvalue conditioning
-    jitter = 1e-4 * (1.0 + np.mean(squared_residuals) * 10)
-    sntk_matrix += jitter * torch.eye(sntk_matrix.shape[0], device=sntk_matrix.device)
+    # Add minimal regularization - just enough for numerical stability
+    jitter = 1e-4 * torch.eye(sntk_matrix.shape[0], device=sntk_matrix.device)
+    sntk_matrix += jitter
     
     return sntk_matrix
-
-def determine_max_squared_residual(residuals):
-    """Determine maximum squared residual threshold using statistical analysis"""
-    # Convert to numpy for statistical calculations
-    residuals_np = residuals.detach().cpu().numpy()
-    squared_residuals = residuals_np ** 2
-    
-    # Calculate statistics
-    mean_sq_res = np.mean(squared_residuals)
-    std_sq_res = np.std(squared_residuals)
-    
-    # Use 3-sigma rule for clipping threshold
-    max_squared_residual = mean_sq_res + 3 * std_sq_res
-    
-    # Add minimal threshold to handle early training
-    max_squared_residual = max(max_squared_residual, 0.1)
-    
-    return max_squared_residual
 
 def calculate_rmse(y_true, y_pred):
     """Calculate Root Mean Squared Error between two arrays"""

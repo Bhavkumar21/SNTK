@@ -27,3 +27,9 @@ Solution:
 K_S^reg(x, x', {r_i}) = (1/n) ∑ min(r_i², τ) K(x, x_i) K(x_i, x')
 
 where t is defined using the 3-sigma rule: τ = mean(r_i²) + 3 * std(r_i²)
+
+Problem 2: The correct residual clipping seems hard to find but it feels like we can get somewhere by just doing what we have implemented right now
+
+Bigger Problem 3: Why does our SNTK look like our NTK and not like our SGD. I think there is something going on with SNTK keeping up with the lazy regime instead of the feature regime like SGD is supposed to but I am not quite sure?? 
+- The SNTK formulation is mathematically correct for describing SGD noise covariance in the infinite-width, lazy training limit.
+- 

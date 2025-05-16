@@ -24,7 +24,7 @@ def run_width_experiment(widths):
         print(f"\n===== Training models with width = {width} =====")
 
         # HYPER PARAMETERS
-        batch_size = 10
+        batch_size = 5
         lr = 0.01
         if width > 512:
             lr = 0.01 * (512/width)**0.5  # Less aggressive scaling for wider networks
@@ -70,8 +70,8 @@ def run_width_experiment(widths):
         num_values = 5
         val = [int(round(i * (epochs-1) / (num_values-1))) for i in range(num_values)]
         # Plot individual width results
-        plot_loss_comparison(sgd_losses, sntk_losses, name=f"{width}")
-        plot_evolution(X_test, y_test_true, sgd_preds, sntk_preds, val, name=f"{width}")
+        plot_loss_comparison(sgd_losses, sntk_losses, name=f"{width}-5bt")
+        plot_evolution(X_test, y_test_true, sgd_preds, sntk_preds, val, name=f"{width}-5bt")
         plot_four_method_comparison(
             X, y, X_test, y_test_true,
             gd_losses, ntk_losses, sgd_losses, sntk_losses,
