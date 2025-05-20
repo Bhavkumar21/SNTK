@@ -25,12 +25,8 @@ def run_width_experiment(widths):
 
         # HYPER PARAMETERS
         batch_size = 5
-        lr = 0.01
-        if width > 512:
-            lr = 0.01 * (512/width)**0.5  # Less aggressive scaling for wider networks
-        else:
-            lr = 0.01 * (128/width)**0.25
-        
+        lr = 0.001 * (128/width)**0.5
+
         # Initialize models with identical weights
         model_gd = SimpleNN(width=width)
         model_ntk = SimpleNN(width=width)
@@ -54,7 +50,7 @@ def run_width_experiment(widths):
         
         gd_losses, gd_preds = train_with_gd(
             model_gd, X_tensor, y_tensor, X_test_tensor,
-            epochs=epochs, lr=lr
+            epochs=epochs, lr=lr        
         )
         
         ntk_losses, ntk_preds = train_with_ntk(
@@ -70,8 +66,8 @@ def run_width_experiment(widths):
         num_values = 5
         val = [int(round(i * (epochs-1) / (num_values-1))) for i in range(num_values)]
         # Plot individual width results
-        plot_loss_comparison(sgd_losses, sntk_losses, name=f"{width}-5bt")
-        plot_evolution(X_test, y_test_true, sgd_preds, sntk_preds, val, name=f"{width}-5bt")
+        plot_loss_comparison(sgd_losses, sntk_losses, name=f"{width}")
+        plot_evolution(X_test, y_test_true, sgd_preds, sntk_preds, val, name=f"{width}")
         plot_four_method_comparison(
             X, y, X_test, y_test_true,
             gd_losses, ntk_losses, sgd_losses, sntk_losses,

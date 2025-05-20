@@ -3,7 +3,7 @@ import torch.nn as nn
 from tqdm import tqdm
 from kernels import compute_ntk, compute_sntk
 
-def train_with_sgd(model, X_tensor, y_tensor, X_test_tensor, initial_epochs=100, batch_size=10, lr=0.01, patience=5, min_delta=1e-5, max_epochs=1000):
+def train_with_sgd(model, X_tensor, y_tensor, X_test_tensor, initial_epochs=100, batch_size=10, lr=0.01, patience=5, min_delta=1e-5, max_epochs=2000):
     """Train model using SGD with incremental epochs until convergence"""
     optimizer = torch.optim.SGD(model.parameters(), lr=lr)
     loss_fn = nn.MSELoss()

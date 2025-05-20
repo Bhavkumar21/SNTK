@@ -30,6 +30,6 @@ where t is defined using the 3-sigma rule: τ = mean(r_i²) + 3 * std(r_i²)
 
 Problem 2: The correct residual clipping seems hard to find but it feels like we can get somewhere by just doing what we have implemented right now
 
-Bigger Problem 3: Why does our SNTK look like our NTK and not like our SGD. I think there is something going on with SNTK keeping up with the lazy regime instead of the feature regime like SGD is supposed to but I am not quite sure?? 
+Bigger Problem 3: 
+- Our SNTK look like our NTK and not like our SGD. This is evident at widths of 6144 and all other widths. Since our SGD is following the feature regime and not a lazy regime our SNTK is not able to follow it.  
 - The SNTK formulation is mathematically correct for describing SGD noise covariance in the infinite-width, lazy training limit.
-- 
